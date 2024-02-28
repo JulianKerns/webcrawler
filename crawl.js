@@ -36,14 +36,10 @@ function getURLsfromHTML(htmlBody, baseUrl){
            
         }
         
-       
     }
     return linkList
     }
    
-
-
-
 
 module.exports = {
     normalizeURL,
