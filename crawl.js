@@ -18,7 +18,7 @@ function getURLsfromHTML(htmlBody, baseUrl){
     const webpageUrl = dom.window.document.querySelectorAll("a")
     for(const item of webpageUrl){
         let url = item.getAttribute('href')
-        if(url[0] === '/'){
+        if(url.slice(0,1) === '/'){
             try{
             url = baseUrl + url
             let urlvalid = new URL(url).href
@@ -40,8 +40,32 @@ function getURLsfromHTML(htmlBody, baseUrl){
     return linkList
     }
 
-async function crawlPage(currUrl){
+
+async function crawlPage(rootUrl, currUrl, pages){
+    const baseDomain = new URL(rootUrl).hostname
+    const currDomain = new URL(currUrl).hostname
+   
+    
+    if(baseDomain !== currDomain){
+        return pages
+    }
+
+    const normCurrUrl = normalizeURL(currUrl)
+
+    if(pages[normCurrUrl]){
+        pages[normCurrUrl]++
+        return pages
+
+    }else if(!pages[normCurrUrl] && currUrl === rootUrl){
+        pages[normCurrUrl] = 0
+        
+
+    }else if(!pages[normCurrUrl]){
+        pages[normCurrUrl] = 1
+    }
+
     let response = null
+    let HTMLbody= null
     try{
      response = await fetch(currUrl,{
         method : 'GET',
@@ -51,20 +75,32 @@ async function crawlPage(currUrl){
     catch(err){
         return `An Error occured during fetching ${err.message}`
     } 
-    
     try{
     if(response.status < 400 && response.headers.get('content-type').includes('text/html')){
-        const HTMLbody = await response.text()
-        console.log(`${HTMLbody}`)
+         HTMLbody= await response.text()
+         
+         
     }
     else{
-        console.log('Error: Could not retrive Server-Data')
+        console.log('Error: Could not retrive HTML_Data')
     }
     }catch(err){
         console.log(`Error occured: ${err.message}`)
     }
+    const listOfPageUrls = getURLsfromHTML(HTMLbody,rootUrl)
+   
+   for(const pageUrl of listOfPageUrls){
+    console.log(`Crawling webpage: ${pageUrl}`)
+    const crawling = await crawlPage(rootUrl,pageUrl,pages)
+   
+     
+   }
+  
+   return pages
+    
 
 }
+
 
 
 
